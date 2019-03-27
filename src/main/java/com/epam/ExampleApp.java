@@ -15,7 +15,7 @@ public class ExampleApp {
         final GpsNavigator navigator = new StubGpsNavigator();
         navigator.readData("C:\\Users\\Manya\\IdeaProjects\\GPS_EPAM\\src\\main\\java\\com\\epam\\road_map");
 
-        final Path path = navigator.findPath("C", "A");
+        final Path path = navigator.findPath("A", "C");
         System.out.println(path);
     }
 
@@ -39,17 +39,17 @@ public class ExampleApp {
             try {
                     String current = pointA;
                     while (!current.equals(pointB)) {
-                        List<Road> possibleRoads = findRoads(current);
+                        List<Road> possibleRoads = findPossibleRoads(current);
                         if (possibleRoads == null || !canMoveToPoint(pointB)) {
                             throw new NoPossibleRoads("exception");
                         }
                         Road currentRoad = possibleRoads.get(0);
                         int minCost = currentRoad.getLength() * currentRoad.getCost();
                         for (Road road : possibleRoads) {
-                            if (road.getLength() * road.getCost() <= minCost && road.getEnd().equals(pointB)) {
+                            if (getCost(road) <= minCost && road.getEnd().equals(pointB)) {
                                 minCost = road.getLength();
                                 currentRoad = road;
-                            } else if (road.getLength() * road.getCost() < minCost) {
+                            } else if (getCost(road) < minCost) {
                                 minCost = road.getLength();
                                 currentRoad = road;
                             }
@@ -67,7 +67,11 @@ public class ExampleApp {
             return new Path(path,cost);
         }
 
-        private List<Road> findRoads(String begin){
+        private Integer getCost(Road road){
+            return road.getLength() * road.getCost();
+        }
+
+        private List<Road> findPossibleRoads(String begin){
             List<Road> possibleRoads = new ArrayList<>();
             for (Road road: roads) {
                 if (road.getBegin().equals(begin)){

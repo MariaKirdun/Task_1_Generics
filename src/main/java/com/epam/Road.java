@@ -7,10 +7,10 @@ public class Road {
     private int length;
     private int cost;
 
-    public Road(String begin, String end, int lenght, int cost) {
+    public Road(String begin, String end, int length, int cost) {
         this.begin = begin;
         this.end = end;
-        this.length = lenght;
+        this.length = length;
         this.cost = cost;
     }
 
