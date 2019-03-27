@@ -2,10 +2,10 @@ package main.java.com.epam;
 
 import main.java.com.epam.api.GpsNavigator;
 import main.java.com.epam.api.Path;
+import main.java.com.epam.calculations.CostCalculations;
+import main.java.com.epam.calculations.DayCostCalculator;
 import main.java.com.epam.exeptions.NoPossibleRoads;
 import main.java.com.epam.exeptions.NotCorrectData;
-
-import javax.xml.stream.FactoryConfigurationError;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,22 +14,40 @@ import java.util.List;
  */
 public class ExampleApp {
 
+    private static int BEGIN = 0;
+    private static int END = 1;
+    private static int LENGTH = 2;
+    private static int COST = 3;
+
     public static void main(String[] args) {
         final GpsNavigator navigator = new StubGpsNavigator<Road>();
         navigator.readData("C:\\Users\\Manya\\IdeaProjects\\GPS_EPAM\\src\\main\\java\\com\\epam\\road_map");
+        ((StubGpsNavigator) navigator).setRoads(getRoads(((StubGpsNavigator) navigator).getData()));
+        ((StubGpsNavigator) navigator).setCalculator(new DayCostCalculator());
 
         final Path path = navigator.findPath("C", "A");
         System.out.println(path);
     }
 
+    private static List<Road> getRoads(List<String> lines){
+        List<Road> roads = new ArrayList<>();
+        for (String line: lines) {
+            String[] lineData = line.split(" ");
+            Road road = new Road();
+            road.setBegin(lineData[BEGIN]);
+            road.setEnd(lineData[END]);
+            road.setLength(Integer.parseInt(lineData[LENGTH]));
+            road.setCost(Integer.parseInt(lineData[COST]));
+            roads.add(road);
+        }
+        return roads;
+    }
+
     private static class StubGpsNavigator <T extends Road> implements GpsNavigator {
 
         private List<T> roads;
-
-        private static int BEGIN = 0;
-        private static int END = 1;
-        private static int LENGTH = 2;
-        private static int COST = 3;
+        private List<String> data;
+        private CostCalculations calculator;
 
         @Override
         public void readData(String filePath) {
@@ -37,28 +55,35 @@ public class ExampleApp {
             DataReader reader = new DataReader();
 
             try {
-                List<String> data = reader.readFromFile(filePath);
-                roads = getRoads(data);
+                data = reader.readFromFile(filePath);
             } catch (NotCorrectData e){
                 System.out.println(e.getMessage());
             }
         }
 
-
-        private List<T> getRoads(List<String> lines){
-            List<T> roads = new ArrayList<>();
-            for (String line: lines) {
-                String[] lineData = line.split(" ");
-                T road = (T) new Road();
-                road.setBegin(lineData[BEGIN]);
-                road.setEnd(lineData[END]);
-                road.setLength(Integer.parseInt(lineData[LENGTH]));
-                road.setCost(Integer.parseInt(lineData[COST]));
-                roads.add(road);
-            }
+        public List<T> getRoads() {
             return roads;
         }
 
+        public void setRoads(List<T> roads) {
+            this.roads = roads;
+        }
+
+        public List<String> getData() {
+            return data;
+        }
+
+        public void setData(List<String> data) {
+            this.data = data;
+        }
+
+        public CostCalculations getCalculator() {
+            return calculator;
+        }
+
+        public void setCalculator(CostCalculations calculator) {
+            this.calculator = calculator;
+        }
 
         @Override
         public Path findPath(String pointA, String pointB) {
@@ -69,17 +94,17 @@ public class ExampleApp {
             try {
                     String current = pointA;
                     while (!current.equals(pointB)) {
-                        List<Road> possibleRoads = findPossibleRoads(current);
+                        List<T> possibleRoads = findPossibleRoads(current);
                         if (possibleRoads == null || !canMoveToPoint(pointB)) {
                             throw new NoPossibleRoads("exception");
                         }
                         Road currentRoad = possibleRoads.get(0);
                         int minCost = currentRoad.getLength() * currentRoad.getCost();
-                        for (Road road : possibleRoads) {
-                            if (getCost(road) <= minCost && road.getEnd().equals(pointB)) {
+                        for (T road : possibleRoads) {
+                            if (calculator.calculate(road.getLength(),road.getCost()) <= minCost && road.getEnd().equals(pointB)) {
                                 minCost = road.getLength();
                                 currentRoad = road;
-                            } else if (getCost(road) < minCost) {
+                            } else if (calculator.calculate(road.getLength(),road.getCost()) < minCost) {
                                 minCost = road.getLength();
                                 currentRoad = road;
                             }
@@ -97,13 +122,9 @@ public class ExampleApp {
             return new Path(path,cost);
         }
 
-        private Integer getCost(Road road){
-            return road.getLength() * road.getCost();
-        }
-
-        private List<Road> findPossibleRoads(String begin){
-            List<Road> possibleRoads = new ArrayList<>();
-            for (Road road: roads) {
+        private List<T> findPossibleRoads(String begin){
+            List<T> possibleRoads = new ArrayList<>();
+            for (T road: roads) {
                 if (road.getBegin().equals(begin)){
                     possibleRoads.add(road);
                 }
@@ -112,7 +133,7 @@ public class ExampleApp {
         }
 
         private boolean canMoveToPoint(String point){
-            for (Road road: roads) {
+            for (T road: roads) {
                 if (road.getEnd().equals(point)){
                     return true;
                 }
