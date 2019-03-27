@@ -3,6 +3,9 @@ package main.java.com.epam;
 import main.java.com.epam.api.GpsNavigator;
 import main.java.com.epam.api.Path;
 import main.java.com.epam.exeptions.NoPossibleRoads;
+import main.java.com.epam.exeptions.NotCorrectData;
+
+import javax.xml.stream.FactoryConfigurationError;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,23 +15,50 @@ import java.util.List;
 public class ExampleApp {
 
     public static void main(String[] args) {
-        final GpsNavigator navigator = new StubGpsNavigator();
+        final GpsNavigator navigator = new StubGpsNavigator<Road>();
         navigator.readData("C:\\Users\\Manya\\IdeaProjects\\GPS_EPAM\\src\\main\\java\\com\\epam\\road_map");
 
-        final Path path = navigator.findPath("A", "C");
+        final Path path = navigator.findPath("C", "A");
         System.out.println(path);
     }
 
-    private static class StubGpsNavigator implements GpsNavigator {
+    private static class StubGpsNavigator <T extends Road> implements GpsNavigator {
 
-        private List<Road> roads;
+        private List<T> roads;
+
+        private static int BEGIN = 0;
+        private static int END = 1;
+        private static int LENGTH = 2;
+        private static int COST = 3;
 
         @Override
         public void readData(String filePath) {
             // Read data from road_map.
             DataReader reader = new DataReader();
-            roads = reader.read(filePath);
+
+            try {
+                List<String> data = reader.readFromFile(filePath);
+                roads = getRoads(data);
+            } catch (NotCorrectData e){
+                System.out.println(e.getMessage());
+            }
         }
+
+
+        private List<T> getRoads(List<String> lines){
+            List<T> roads = new ArrayList<>();
+            for (String line: lines) {
+                String[] lineData = line.split(" ");
+                T road = (T) new Road();
+                road.setBegin(lineData[BEGIN]);
+                road.setEnd(lineData[END]);
+                road.setLength(Integer.parseInt(lineData[LENGTH]));
+                road.setCost(Integer.parseInt(lineData[COST]));
+                roads.add(road);
+            }
+            return roads;
+        }
+
 
         @Override
         public Path findPath(String pointA, String pointB) {
