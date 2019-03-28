@@ -1,7 +1,9 @@
 package main.java.com.epam.calculations;
 
-public interface CostCalculations {
+import main.java.com.epam.Road;
 
-    public Integer calculate(Integer length, Integer cost);
+public interface CostCalculations<T extends Road> {
+
+    public Integer calculate(T road);
 
 }

@@ -3,7 +3,7 @@ package main.java.com.epam;
 import main.java.com.epam.api.GpsNavigator;
 import main.java.com.epam.api.Path;
 import main.java.com.epam.calculations.CostCalculations;
-import main.java.com.epam.calculations.DayCostCalculator;
+import main.java.com.epam.calculations.SimpleCostCalculator;
 import main.java.com.epam.exeptions.NoPossibleRoads;
 import main.java.com.epam.exeptions.NotCorrectData;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ public class ExampleApp {
         final GpsNavigator navigator = new StubGpsNavigator<Road>();
         navigator.readData("C:\\Users\\Manya\\IdeaProjects\\GPS_EPAM\\src\\main\\java\\com\\epam\\road_map");
         ((StubGpsNavigator) navigator).setRoads(getRoads(((StubGpsNavigator) navigator).getData()));
-        ((StubGpsNavigator) navigator).setCalculator(new DayCostCalculator());
+        ((StubGpsNavigator) navigator).setCalculator(new SimpleCostCalculator());
 
         final Path path = navigator.findPath("C", "A");
         System.out.println(path);
@@ -101,10 +101,10 @@ public class ExampleApp {
                         Road currentRoad = possibleRoads.get(0);
                         int minCost = currentRoad.getLength() * currentRoad.getCost();
                         for (T road : possibleRoads) {
-                            if (calculator.calculate(road.getLength(),road.getCost()) <= minCost && road.getEnd().equals(pointB)) {
+                            if (calculator.calculate(road) <= minCost && road.getEnd().equals(pointB)) {
                                 minCost = road.getLength();
                                 currentRoad = road;
-                            } else if (calculator.calculate(road.getLength(),road.getCost()) < minCost) {
+                            } else if (calculator.calculate(road) < minCost) {
                                 minCost = road.getLength();
                                 currentRoad = road;
                             }
